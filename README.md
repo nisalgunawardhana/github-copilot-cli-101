@@ -1,5 +1,8 @@
 # GitHub Copilot CLI - 101
 
+[![Follow me on GitHub](https://img.shields.io/github/followers/nisalgunawardhana?label=Follow%20%40nisalgunawardhana&style=social)](https://github.com/nisalgunawardhana)
+[![Star this repo](https://img.shields.io/github/stars/nisalgunawardhana/github-copilot-cli-101?style=social)](https://github.com/nisalgunawardhana/github-copilot-cli-101/stargazers)
+
 ![GitHub Copilot Banner](./images/copilot-banner.png)
 
 A practical, beginner-friendly learning path for GitHub Copilot CLI. This repository is designed for developers who want to understand how to use GitHub Copilot from the command line to speed up everyday development tasks.
@@ -87,7 +90,21 @@ You will need to capture **three screenshots** showing:
 3. Write a brief note (2-3 sentences) about what you found most useful.
 4. Submit the issue and wait for a review.
 
-Once your submission is reviewed and accepted, a **completion badge** will be awarded.
+Once your submission is reviewed and accepted, a **completion badge** will be awarded automatically and posted as a comment on your issue.
+
+### Completion Badge
+
+Earn this badge by completing the course and submitting your evidence:
+
+![GitHub Copilot CLI 101 — Completed](images/badge.png)
+
+**Grab it** — once your submission is approved, add this to your GitHub profile README or portfolio:
+
+```markdown
+[![GitHub Copilot CLI 101 — Completed](https://img.shields.io/badge/GitHub%20Copilot%20CLI%20101-Completed%20%F0%9F%8E%89-brightgreen?style=for-the-badge&logo=github)](YOUR_ISSUE_LINK)
+```
+
+> Replace `YOUR_ISSUE_LINK` with the link to your closed submission issue.
 
 ---
 
@@ -131,3 +148,11 @@ Contributions to improve this course are welcome. Please read [CODE_OF_CONDUCT.m
 ## License
 
 This repository is licensed under the [MIT License](./LICENSE). You are free to use, adapt, and share this content with attribution.
+
+---
+
+## Author
+
+Created and maintained by [@nisalgunawardhana](https://github.com/nisalgunawardhana).
+
+
