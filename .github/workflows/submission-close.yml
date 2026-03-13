@@ -8,9 +8,9 @@ permissions:
   issues: write
 
 jobs:
-  # ── On open: assign to @nisalgunawardhana + welcome comment ─────────────────
+  # ── On open: assign to @nisalgunawardhana + labels + welcome comment ────────
   auto-assign-and-label:
-    if: github.event.action == 'opened' && contains(toJson(github.event.issue.labels), '"submission"')
+    if: github.event.action == 'opened'
     runs-on: ubuntu-latest
     steps:
       - name: Assign issue to reviewer
@@ -23,6 +23,18 @@ jobs:
               repo: context.repo.repo,
               issue_number: context.issue.number,
               assignees: ['nisalgunawardhana']
+            });
+
+      - name: Add labels
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['submission', 'pending review']
             });
 
       - name: Welcome comment
@@ -72,6 +84,25 @@ jobs:
     if: github.event.action == 'closed' && contains(toJson(github.event.issue.labels), '"submission"') && github.event.sender.login == 'nisalgunawardhana'
     runs-on: ubuntu-latest
     steps:
+      - name: Remove pending review label and add completed
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              name: 'pending review'
+            }).catch(() => {}); // Ignore if label doesn't exist
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['completed']
+            });
+
       - name: Post completion badge and congratulations
         uses: actions/github-script@v7
         with:
@@ -128,11 +159,4 @@ jobs:
               repo: context.repo.repo,
               issue_number: issueNumber,
               body
-            });
-
-            await github.rest.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issueNumber,
-              labels: ['completed']
             });
