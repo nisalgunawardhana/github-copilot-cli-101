@@ -1,0 +1,101 @@
+name: Submission — Close Guard & Badge Award
+
+on:
+  issues:
+    types: [closed]
+
+permissions:
+  issues: write
+
+jobs:
+  # ── Guard: reopen if closed by anyone other than @nisalgunawardhana ──────────
+  guard-close:
+    if: contains(github.event.issue.labels.*.name, 'submission') && github.event.sender.login != 'nisalgunawardhana'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reopen issue
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: 'open'
+            });
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `> ⚠️ **This issue was automatically reopened.**
+              >
+              > Submission issues can only be closed by [@nisalgunawardhana](https://github.com/nisalgunawardhana) after reviewing your work.
+              > Please wait for your submission to be reviewed — you'll receive your badge as soon as it's approved!`
+            });
+
+  # ── Award: post badge + social share when @nisalgunawardhana closes it ───────
+  award-badge:
+    if: contains(github.event.issue.labels.*.name, 'submission') && github.event.sender.login == 'nisalgunawardhana'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post completion badge and congratulations
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issueNumber  = context.issue.number;
+            const issueUrl     = context.payload.issue.html_url;
+            const username     = context.payload.issue.user.login;
+            const repoUrl      = context.payload.repository.html_url;
+
+            const badgeMd = `[![GitHub Copilot CLI 101 — Completed](https://img.shields.io/badge/GitHub%20Copilot%20CLI%20101-Completed%20%F0%9F%8E%89-brightgreen?style=for-the-badge&logo=github)](${issueUrl})`;
+
+            const tweetText = encodeURIComponent(
+              `🎉 I just completed the GitHub Copilot CLI 101 course by @nisalgunawardhana!\n\nLevelled up my terminal workflow with GitHub Copilot CLI. Here's my submission:\n${issueUrl}\n\n#GitHubCopilot #DevTools #OpenSource #100DaysOfCode`
+            );
+
+            const linkedInShareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(issueUrl)}`;
+            const twitterShareUrl  = `https://twitter.com/intent/tweet?text=${tweetText}`;
+
+            const body = `## 🎉 Congratulations, @${username}!
+
+            You've successfully completed **GitHub Copilot CLI 101** and your submission has been reviewed and approved by [@nisalgunawardhana](https://github.com/nisalgunawardhana).
+
+            ---
+
+            ### Your Completion Badge
+
+            ${badgeMd}
+
+            Add this to your GitHub profile README or portfolio:
+
+            \`\`\`markdown
+            ${badgeMd}
+            \`\`\`
+
+            ---
+
+            ### Share Your Achievement
+
+            You put in the work — now show it off! Let your network know you levelled up your dev workflow:
+
+            | Platform | Link |
+            |----------|------|
+            | 🐦 Twitter / X | [Share on Twitter](${twitterShareUrl}) |
+            | 💼 LinkedIn | [Share on LinkedIn](${linkedInShareUrl}) |
+
+            > **Suggested caption:**
+            > *"Just completed GitHub Copilot CLI 101! 🚀 Learned how to use \`gh copilot explain\` and \`gh copilot suggest\` to supercharge my terminal workflow. Check it out 👇 ${repoUrl}"*
+
+            ---
+
+            _Reviewed and approved by [@nisalgunawardhana](https://github.com/nisalgunawardhana) · [View submission](${issueUrl})_`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: body.replace(/^            /gm, '')
+            });

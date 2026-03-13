@@ -1,0 +1,137 @@
+name: Course Submission
+description: Submit your screenshots and reflection to receive a completion badge
+title: "Submission: [Your GitHub Username]"
+labels: ["submission"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## GitHub Copilot CLI 101 — Completion Submission
+
+        Fill in each section carefully. **All three screenshots are required** — the form will not submit unless every required field is completed.
+
+        Your submission will be reviewed by [@nisalgunawardhana](https://github.com/nisalgunawardhana).
+        **Only @nisalgunawardhana can close this issue.** Once approved and closed, you'll receive your completion badge automatically!
+
+        ---
+
+  - type: input
+    id: full-name
+    attributes:
+      label: Full Name
+      placeholder: Jane Doe
+    validations:
+      required: true
+
+  - type: input
+    id: email
+    attributes:
+      label: Email Address
+      placeholder: jane@example.com
+    validations:
+      required: true
+
+  - type: input
+    id: university
+    attributes:
+      label: University / Institution
+      placeholder: University of Colombo
+    validations:
+      required: true
+
+  - type: input
+    id: username
+    attributes:
+      label: GitHub Username
+      description: Your GitHub username (without the @)
+      placeholder: your-username
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshot-1
+    attributes:
+      label: "Screenshot 1 — Copilot CLI Installed"
+      description: |
+        Attach a screenshot showing the output of `gh copilot --version`.
+        **Drag and drop or paste your screenshot directly into this box. The field cannot be empty.**
+      placeholder: "Drag & drop or paste your screenshot here — do not leave this empty"
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshot-2
+    attributes:
+      label: "Screenshot 2 — Explain or Suggest in Action"
+      description: |
+        Attach a screenshot showing `gh copilot explain` or `gh copilot suggest` in use, then add a brief note describing what you asked Copilot to do.
+        **Drag and drop or paste your screenshot directly into this box. The field cannot be empty.**
+      placeholder: |
+        Drag & drop or paste your screenshot here — do not leave this empty
+
+        Note: (describe what you asked Copilot to do)
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshot-3
+    attributes:
+      label: "Screenshot 3 — Module 03 Workflow"
+      description: |
+        Attach a screenshot from one of the Module 03 exercises.
+        **Drag and drop or paste your screenshot directly into this box. The field cannot be empty.**
+      placeholder: "Drag & drop or paste your screenshot here — do not leave this empty"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: workflow
+    attributes:
+      label: Module 03 Workflow Used
+      description: Which workflow did you use for Screenshot 3?
+      options:
+        - Code Review
+        - Debugging
+        - Test Generation
+        - Git Integration
+        - Automation
+    validations:
+      required: true
+
+  - type: textarea
+    id: reflection
+    attributes:
+      label: Reflection
+      description: Answer both questions in 2–3 sentences each.
+      value: |
+        **1. Which part of the course was most useful to you?**
+
+
+        **2. How do you plan to use GitHub Copilot CLI in your own work?**
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Submission Checklist
+      description: All boxes must be checked before you can submit.
+      options:
+        - label: I have attached Screenshot 1 (Copilot CLI installed)
+          required: true
+        - label: I have attached Screenshot 2 (explain or suggest in action)
+          required: true
+        - label: I have attached Screenshot 3 (Module 03 workflow)
+          required: true
+        - label: I have completed the reflection section
+          required: true
+        - label: I have worked through all four modules
+          required: true
+        - label: I have read and agree to the Code of Conduct
+          required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        > **Note:** This issue can only be closed by [@nisalgunawardhana](https://github.com/nisalgunawardhana). If it is closed by anyone else it will be automatically reopened.
