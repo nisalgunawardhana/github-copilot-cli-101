@@ -1,16 +1,49 @@
-name: Submission — Close Guard & Badge Award
+name: Auto-assign Badge Submissions
 
 on:
   issues:
-    types: [closed]
+    types: [opened, closed]
 
 permissions:
   issues: write
 
 jobs:
+  # ── On open: assign to @nisalgunawardhana + welcome comment ─────────────────
+  auto-assign-and-label:
+    if: github.event.action == 'opened' && contains(toJson(github.event.issue.labels), '"submission"')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assign issue to reviewer
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.addAssignees({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              assignees: ['nisalgunawardhana']
+            });
+
+      - name: Welcome comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const username = context.payload.issue.user.login;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `👋 Hey @${username}, thanks for submitting!\n\n` +
+                `**Status:** Pending Review ⏳\n` +
+                `**Assigned to:** @nisalgunawardhana\n\n` +
+                `Your submission will be reviewed shortly. Once approved, your completion badge will be posted here automatically. Hang tight! 🚀`
+            });
+
   # ── Guard: reopen if closed by anyone other than @nisalgunawardhana ──────────
   guard-close:
-    if: contains(toJson(github.event.issue.labels), '"submission"') && github.event.sender.login != 'nisalgunawardhana'
+    if: github.event.action == 'closed' && contains(toJson(github.event.issue.labels), '"submission"') && github.event.sender.login != 'nisalgunawardhana'
     runs-on: ubuntu-latest
     steps:
       - name: Reopen issue
@@ -29,15 +62,14 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: `> ⚠️ **This issue was automatically reopened.**
-              >
-              > Submission issues can only be closed by [@nisalgunawardhana](https://github.com/nisalgunawardhana) after reviewing your work.
-              > Please wait for your submission to be reviewed — you'll receive your badge as soon as it's approved!`
+              body: `> ⚠️ **This issue was automatically reopened.**\n>\n` +
+                `> Submission issues can only be closed by [@nisalgunawardhana](https://github.com/nisalgunawardhana) after reviewing your work.\n` +
+                `> Please wait for your submission to be reviewed — you'll receive your badge as soon as it's approved!`
             });
 
   # ── Award: post badge + social share when @nisalgunawardhana closes it ───────
   award-badge:
-    if: contains(toJson(github.event.issue.labels), '"submission"') && github.event.sender.login == 'nisalgunawardhana'
+    if: github.event.action == 'closed' && contains(toJson(github.event.issue.labels), '"submission"') && github.event.sender.login == 'nisalgunawardhana'
     runs-on: ubuntu-latest
     steps:
       - name: Post completion badge and congratulations
@@ -45,59 +77,57 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const issueNumber  = context.issue.number;
-            const issueUrl     = context.payload.issue.html_url;
-            const username     = context.payload.issue.user.login;
-            const repoUrl      = context.payload.repository.html_url;
+            const issueNumber = context.issue.number;
+            const issueUrl    = context.payload.issue.html_url;
+            const username    = context.payload.issue.user.login;
+            const repoUrl     = context.payload.repository.html_url;
 
             const badgeMd = `[![GitHub Copilot CLI 101 — Completed](https://img.shields.io/badge/GitHub%20Copilot%20CLI%20101-Completed%20%F0%9F%8E%89-brightgreen?style=for-the-badge&logo=github)](${issueUrl})`;
 
             const tweetText = encodeURIComponent(
-              `🎉 I just completed the GitHub Copilot CLI 101 course by @nisalgunawardhana!\n\nLevelled up my terminal workflow with GitHub Copilot CLI. Here's my submission:\n${issueUrl}\n\n#GitHubCopilot #DevTools #OpenSource #100DaysOfCode`
+              `🎉 I just completed GitHub Copilot CLI 101 by @nisalgunawardhana!\n\n` +
+              `Levelled up my terminal workflow with GitHub Copilot CLI 🚀\n\n` +
+              `Check it out → ${repoUrl}\n\n` +
+              `#GitHubCopilot #DevTools #OpenSource #100DaysOfCode`
+            );
+            const linkedInText = encodeURIComponent(
+              `I just completed GitHub Copilot CLI 101 — a hands-on course by @nisalgunawardhana!\n\n` +
+              `Learned how to use gh copilot explain and gh copilot suggest to supercharge my terminal workflow.\n\n` +
+              `Check it out and earn your badge too 👇\n${repoUrl}`
             );
 
-            const linkedInShareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(issueUrl)}`;
-            const twitterShareUrl  = `https://twitter.com/intent/tweet?text=${tweetText}`;
+            const twitterUrl  = `https://twitter.com/intent/tweet?text=${tweetText}`;
+            const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(issueUrl)}&summary=${linkedInText}`;
 
-            const body = `## 🎉 Congratulations, @${username}!
-
-            You've successfully completed **GitHub Copilot CLI 101** and your submission has been reviewed and approved by [@nisalgunawardhana](https://github.com/nisalgunawardhana).
-
-            ---
-
-            ### Your Completion Badge
-
-            ${badgeMd}
-
-            Add this to your GitHub profile README or portfolio:
-
-            \`\`\`markdown
-            ${badgeMd}
-            \`\`\`
-
-            ---
-
-            ### Share Your Achievement
-
-            You put in the work — now show it off! Let your network know you levelled up your dev workflow:
-
-            | Platform | Link |
-            |----------|------|
-            | 🐦 Twitter / X | [Share on Twitter](${twitterShareUrl}) |
-            | 💼 LinkedIn | [Share on LinkedIn](${linkedInShareUrl}) |
-
-            > **Suggested caption:**
-            > *"Just completed GitHub Copilot CLI 101! 🚀 Learned how to use \`gh copilot explain\` and \`gh copilot suggest\` to supercharge my terminal workflow. Check it out 👇 ${repoUrl}"*
-
-            ---
-
-            _Reviewed and approved by [@nisalgunawardhana](https://github.com/nisalgunawardhana) · [View submission](${issueUrl})_`;
+            const body =
+              `## 🎉 Congratulations, @${username}!\n\n` +
+              `Your submission for **GitHub Copilot CLI 101** has been reviewed and approved by [@nisalgunawardhana](https://github.com/nisalgunawardhana).\n\n` +
+              `---\n\n` +
+              `### 🏅 Your Completion Badge\n\n` +
+              `${badgeMd}\n\n` +
+              `**Copy this to your GitHub profile README or portfolio:**\n\n` +
+              `\`\`\`markdown\n${badgeMd}\n\`\`\`\n\n` +
+              `> Replace the badge link with this issue URL: \`${issueUrl}\`\n\n` +
+              `---\n\n` +
+              `### 📣 Share Your Achievement!\n\n` +
+              `You put in the work — show it off and inspire others!\n\n` +
+              `| | Platform | Suggested tag |\n` +
+              `|---|---|---|\n` +
+              `| 🐦 | [Share on Twitter / X](${twitterUrl}) | Tag **@nisalgunawardhana** |\n` +
+              `| 💼 | [Share on LinkedIn](${linkedInUrl}) | Mention **@nisalgunawardhana** |\n\n` +
+              `> **Caption idea:** *"Just completed GitHub Copilot CLI 101 by @nisalgunawardhana! 🚀 Learned how to use \`gh copilot explain\` & \`gh copilot suggest\` to supercharge my terminal. Check it out 👇 ${repoUrl} #GitHubCopilot #DevTools"*\n\n` +
+              `---\n\n` +
+              `### 🔔 Want more learning opportunities?\n\n` +
+              `Follow [@nisalgunawardhana on GitHub](https://github.com/nisalgunawardhana) to get notified when new courses and hands-on workshops drop!\n\n` +
+              `[![Follow on GitHub](https://img.shields.io/github/followers/nisalgunawardhana?label=Follow%20%40nisalgunawardhana&style=social)](https://github.com/nisalgunawardhana)\n\n` +
+              `---\n\n` +
+              `_Reviewed and approved by [@nisalgunawardhana](https://github.com/nisalgunawardhana) · [View submission #${issueNumber}](${issueUrl})_`;
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issueNumber,
-              body: body.replace(/^            /gm, '')
+              body
             });
 
             await github.rest.issues.addLabels({
