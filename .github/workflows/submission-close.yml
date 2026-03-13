@@ -18,28 +18,38 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            await github.rest.issues.addAssignees({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              assignees: ['nisalgunawardhana']
-            });
+            try {
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                assignees: ['nisalgunawardhana']
+              });
+            } catch (error) {
+              console.log('Assignment attempt made', error.message);
+            }
 
       - name: Add labels
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            // Verify submission label exists (from template), then add pending review
+            // Add pending review label to submission issues
             const hasSubmissionLabel = context.payload.issue.labels.some(label => label.name === 'submission');
-            if (!hasSubmissionLabel) return; // Skip if not a submission issue
             
-            await github.rest.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              labels: ['pending review']
-            });
+            if (hasSubmissionLabel) {
+              try {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  labels: ['pending review']
+                });
+                console.log('Added pending review label');
+              } catch (error) {
+                console.log('Error adding label:', error.message);
+              }
+            }
 
       - name: Welcome comment
         uses: actions/github-script@v7
@@ -125,11 +135,11 @@ jobs:
             const username    = context.payload.issue.user.login;
             const repoUrl     = context.payload.repository.html_url;
 
-            const badgeMd = `[![GitHub Copilot CLI 101 — Completed](https://img.shields.io/badge/GitHub%20Copilot%20CLI%20101-Completed%20%F0%9F%8E%89-brightgreen?style=for-the-badge&logo=github)](${issueUrl})`;
+            const badgeMd = `[![GitHub Copilot CLI 101 — Completed](${repoUrl}/raw/main/images/badge.png)](${issueUrl})`;
 
             const tweetText = encodeURIComponent(
               `🎉 I just completed GitHub Copilot CLI 101 by @nisalgunawardhana!\n\n` +
-              `Levelled up my terminal workflow with GitHub Copilot CLI 🚀\n\n` +
+              `Levelled up my terminal workflow with GitHub Copilot CLI \n\n` +
               `Check it out → ${repoUrl}\n\n` +
               `#GitHubCopilot #DevTools #OpenSource #100DaysOfCode`
             );
@@ -156,7 +166,7 @@ jobs:
               `You put in the work — show it off and inspire others!\n\n` +
               `| | Platform | Suggested tag |\n` +
               `|---|---|---|\n` +
-              `| 🐦 | [Share on Twitter / X](${twitterUrl}) | Tag **@nisalgunawardhana** |\n` +
+              `| 🐦 | [Share on Twitter / X](${twitterUrl}) | Tag **@thenisals** |\n` +
               `| 💼 | [Share on LinkedIn](${linkedInUrl}) | Mention **@nisalgunawardhana** |\n\n` +
               `> **Caption idea:** *"Just completed GitHub Copilot CLI 101 by @nisalgunawardhana! 🚀 Learned how to use \`gh copilot explain\` & \`gh copilot suggest\` to supercharge my terminal. Check it out 👇 ${repoUrl} #GitHubCopilot #DevTools"*\n\n` +
               `---\n\n` +
