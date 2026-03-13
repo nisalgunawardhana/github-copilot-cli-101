@@ -34,21 +34,17 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            // Add pending review label to submission issues
-            const hasSubmissionLabel = context.payload.issue.labels.some(label => label.name === 'submission');
-            
-            if (hasSubmissionLabel) {
-              try {
-                await github.rest.issues.addLabels({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                  labels: ['pending review']
-                });
-                console.log('Added pending review label');
-              } catch (error) {
-                console.log('Error adding label:', error.message);
-              }
+            // Always add submission and pending review labels
+            try {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: ['submission', 'pending review']
+              });
+              console.log('Added submission and pending review labels');
+            } catch (error) {
+              console.log('Error adding labels:', error.message);
             }
 
       - name: Welcome comment
@@ -107,23 +103,28 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            // Only process submission issues
-            const isSubmission = context.payload.issue.labels.some(label => label.name === 'submission');
-            if (!isSubmission) return;
-            
-            await github.rest.issues.removeLabel({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              name: 'pending review'
-            }).catch(() => {}); // Ignore if label doesn't exist
+            try {
+              // Remove pending review label
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                name: 'pending review'
+              }).catch(() => {
+                console.log('pending review label not found (already removed)');
+              });
 
-            await github.rest.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              labels: ['completed']
-            });
+              // Add completed label
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: ['completed']
+              });
+              console.log('Added completed label and removed pending review');
+            } catch (error) {
+              console.log('Error updating labels:', error.message);
+            }
 
       - name: Post completion badge and congratulations
         uses: actions/github-script@v7
