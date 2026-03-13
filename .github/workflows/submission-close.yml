@@ -10,7 +10,7 @@ permissions:
 jobs:
   # ── On open: assign to @nisalgunawardhana + labels + welcome comment ────────
   auto-assign-and-label:
-    if: github.event.action == 'opened'
+    if: github.event.action == 'opened' && github.event.issue.labels[*].name == 'submission'
     runs-on: ubuntu-latest
     steps:
       - name: Assign issue to reviewer
