@@ -10,7 +10,7 @@ permissions:
 jobs:
   # ── On open: assign to @nisalgunawardhana + labels + welcome comment ────────
   auto-assign-and-label:
-    if: github.event.action == 'opened' && contains(github.event.issue.labels.*.name, 'submission')
+    if: github.event.action == 'opened'
     runs-on: ubuntu-latest
     steps:
       - name: Assign issue to reviewer
@@ -30,11 +30,15 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            // Verify submission label exists (from template), then add pending review
+            const hasSubmissionLabel = context.payload.issue.labels.some(label => label.name === 'submission');
+            if (!hasSubmissionLabel) return; // Skip if not a submission issue
+            
             await github.rest.issues.addLabels({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              labels: ['submission', 'pending review']
+              labels: ['pending review']
             });
 
       - name: Welcome comment
@@ -55,7 +59,7 @@ jobs:
 
   # ── Guard: reopen if closed by anyone other than @nisalgunawardhana ──────────
   guard-close:
-    if: github.event.action == 'closed' && contains(github.event.issue.labels.*.name, 'submission') && github.event.sender.login != 'nisalgunawardhana'
+    if: github.event.action == 'closed' && github.event.sender.login != 'nisalgunawardhana'
     runs-on: ubuntu-latest
     steps:
       - name: Reopen issue
@@ -63,6 +67,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            // Only reopen if this is a submission issue
+            const isSubmission = context.payload.issue.labels.some(label => label.name === 'submission');
+            if (!isSubmission) return;
+            
             await github.rest.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -81,7 +89,7 @@ jobs:
 
   # ── Award: post badge + social share when @nisalgunawardhana closes it ───────
   award-badge:
-    if: github.event.action == 'closed' && contains(github.event.issue.labels.*.name, 'submission') && github.event.sender.login == 'nisalgunawardhana'
+    if: github.event.action == 'closed' && github.event.sender.login == 'nisalgunawardhana'
     runs-on: ubuntu-latest
     steps:
       - name: Remove pending review label and add completed
@@ -89,6 +97,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            // Only process submission issues
+            const isSubmission = context.payload.issue.labels.some(label => label.name === 'submission');
+            if (!isSubmission) return;
+            
             await github.rest.issues.removeLabel({
               owner: context.repo.owner,
               repo: context.repo.repo,
