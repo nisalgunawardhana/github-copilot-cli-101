@@ -10,7 +10,7 @@ permissions:
 jobs:
   # ── Guard: reopen if closed by anyone other than @nisalgunawardhana ──────────
   guard-close:
-    if: contains(github.event.issue.labels.*.name, 'submission') && github.event.sender.login != 'nisalgunawardhana'
+    if: contains(toJson(github.event.issue.labels), '"submission"') && github.event.sender.login != 'nisalgunawardhana'
     runs-on: ubuntu-latest
     steps:
       - name: Reopen issue
@@ -37,7 +37,7 @@ jobs:
 
   # ── Award: post badge + social share when @nisalgunawardhana closes it ───────
   award-badge:
-    if: contains(github.event.issue.labels.*.name, 'submission') && github.event.sender.login == 'nisalgunawardhana'
+    if: contains(toJson(github.event.issue.labels), '"submission"') && github.event.sender.login == 'nisalgunawardhana'
     runs-on: ubuntu-latest
     steps:
       - name: Post completion badge and congratulations
@@ -98,4 +98,11 @@ jobs:
               repo: context.repo.repo,
               issue_number: issueNumber,
               body: body.replace(/^            /gm, '')
+            });
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              labels: ['completed']
             });
